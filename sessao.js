@@ -129,6 +129,9 @@ function configurarTema() {
   document.querySelectorAll('[data-tema-botao]').forEach((botao) => {
     desenharBotaoTema(botao);
     botao.addEventListener('click', () => {
+      if (botao.dataset.esperando) return;
+      botao.dataset.esperando = '1';
+      setTimeout(() => { delete botao.dataset.esperando; }, 1000);
       Tema.aplicar(Tema.atual() === 'escuro' ? 'claro' : 'escuro');
       botao.classList.remove('girar'); void botao.offsetWidth; botao.classList.add('girar');
     });

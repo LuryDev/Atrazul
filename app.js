@@ -513,7 +513,7 @@ function linhaDoAviao(v) {
     return `
       <li class="parada ${classe} ${x.id === v.id ? 'atual' : ''}" style="--atraso:${atraso.toFixed(2)}s">
         <span class="parada-ponto"></span>
-        <strong>${esc(x.numero)}</strong>
+        <strong>${esc(x.numero).replace(/^([A-Z]+)/, '<span class="parada-pre">$1</span>')}</strong>
         <small>${hora(x.partida_prevista)}</small>
         <em>${x.atraso_total ? `+${x.atraso_total} min` : 'no horário'}</em>
       </li>`;
@@ -584,14 +584,14 @@ function mostrarSugestoes() {
     .filter((s) => !motivo(s.codigo).reativo));
   if (!texto.trim()) { alvo.innerHTML = ''; return; }
   if (!confiante) {
-    alvo.innerHTML = '<p class="sugestoes-vazio">Ainda não sei sugerir um motivo para essa descrição. Escolha na lista abaixo.</p>';
+    alvo.innerHTML = '<p class="sugestoes-vazio">A Azuli ainda não sabe sugerir um motivo para essa descrição. Escolha na lista abaixo.</p>';
     return;
   }
   const base = ModeloMotivo.totalConfirmados
     ? `aprendeu com ${plural(ModeloMotivo.totalConfirmados, 'motivo confirmado', 'motivos confirmados')}`
     : `${ModeloMotivo.totalExemplos} exemplos iniciais`;
   alvo.innerHTML = `
-    <p class="sugestoes-titulo">Sugestão automática <span>${base}</span></p>
+    <p class="sugestoes-titulo">Sugestão da Azuli <span>${base}</span></p>
     <div class="sugestoes-lista">
       ${lista.map((s) => `
         <button type="button" class="sugestao" data-codigo="${esc(s.codigo)}">
@@ -676,7 +676,7 @@ function atualizarPrevisao() {
     : '<li><span>Último voo da aeronave no dia.</span></li>';
 
   alvo.innerHTML = `
-    <p class="previsao-titulo">Previsão</p>
+    <p class="previsao-titulo">Previsão da Azuli</p>
     ${duracao}
     <p class="previsao-sub">Próximos voos com ${minutos} min</p>
     <ul class="previsao-voos">${linhas}</ul>`;
@@ -748,10 +748,18 @@ function renderConfirmar() {
   det.hidden = !confirmados.length;
   det.querySelector('summary').textContent = `Motivos já confirmados (${confirmados.length})`;
   det.querySelector('ul').innerHTML = confirmados.map((a) => `
-    <li><strong>${esc(a.voo_numero)}</strong> · ${a.minutos} min · ${esc(a.sintoma_descricao)}</li>`).join('');
+    <li><span><strong>${esc(a.voo_numero)}</strong> · ${a.minutos} min · ${esc(a.sintoma_descricao)}</span>
+      ${quemFez(a)}</li>`).join('');
 
   document.querySelectorAll('.form-confirmar').forEach((f) => f.addEventListener('submit', confirmarMotivo));
   document.querySelectorAll('.form-parecer').forEach((f) => f.addEventListener('submit', salvarParecer));
+}
+
+function quemFez(a) {
+  const partes = [];
+  if (a.registrado_por) partes.push(`Registrado por <strong>${esc(a.registrado_por)}</strong>${a.registrado_em ? ` às ${hora(a.registrado_em)}` : ''}`);
+  if (a.status === 'VALIDADO' && a.confirmado_por) partes.push(`confirmado por <strong>${esc(a.confirmado_por)}</strong>`);
+  return partes.length ? `<span class="quem">${partes.join(' · ')}</span>` : '';
 }
 
 function cartaoPendente(a) {
@@ -774,6 +782,7 @@ function cartaoPendente(a) {
       </header>
 
       <p class="registrado">Registrado como <strong>${esc(a.sintoma_descricao)}</strong>${a.observacao ? `: “${esc(a.observacao)}”` : ''}</p>
+      ${quemFez(a)}
 
       ${pareceres.length ? `
         <ul class="opinioes" aria-label="Opinião das áreas">
@@ -820,7 +829,7 @@ async function confirmarMotivo(e) {
     const antes = ModeloMotivo.totalConfirmados;
     await recarregar();
     toast(ModeloMotivo.totalConfirmados > antes
-      ? 'Motivo confirmado. A sugestão automática aprendeu com este caso.'
+      ? 'Motivo confirmado. A Azuli aprendeu com este caso.'
       : 'Motivo confirmado. Os voos afetados já mostram a causa oficial.');
   } catch (err) { toast(err.message, true); }
 }

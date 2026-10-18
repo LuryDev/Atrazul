@@ -75,6 +75,7 @@ create table atraso (
                   check (status in ('PROVISORIO', 'VALIDADO')),
     observacao    text,
     registrado_por text,
+    confirmado_por text,
     registrado_em timestamp not null default now(),
 
     check ((tipo = 'ORIGINADOR'  and atraso_pai_id is null) or
@@ -286,7 +287,10 @@ select a.id, a.voo_id, v.numero as voo_numero, v.matricula,
        mr.categoria              as causa_raiz_categoria,
        mr.area_responsavel       as causa_raiz_area,
        ar.status                 as causa_raiz_status,
-       r.profundidade
+       r.profundidade,
+       a.registrado_por,
+       a.registrado_em,
+       a.confirmado_por
   from atraso a
   join voo    v  on v.id  = a.voo_id
   join motivo ms on ms.codigo = a.motivo_codigo
@@ -443,9 +447,12 @@ create function op_validar_atraso(p_token uuid, p_atraso_id int, p_motivo_final 
 returns void
 language plpgsql security definer set search_path = public
 as $$
+declare
+    v_f funcionario;
 begin
-    perform funcionario_da_sessao(p_token);
+    v_f := funcionario_da_sessao(p_token);
     perform validar_atraso(p_atraso_id, p_motivo_final);
+    update atraso set confirmado_por = v_f.nome || ' (' || v_f.codigo || ')' where id = p_atraso_id;
 end;
 $$;
 
@@ -496,6 +503,7 @@ begin
                      'texto', e.area || ' deu parecer sobre o atraso do ' || e.voo_numero);
         elsif e.tipo = 'VALIDACAO' and v_orig is not null then
             perform validar_atraso(v_orig, e.motivo);
+            update atraso set confirmado_por = e.autor where id = v_orig;
             v_log := v_log || jsonb_build_object('hora', to_char(e.acontece_em, 'HH24:MI'),
                      'texto', 'Causa oficial do atraso do ' || e.voo_numero || ' validada');
         end if;

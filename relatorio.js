@@ -222,6 +222,69 @@ const Relatorio = (() => {
     });
   }
 
+  const nomeCurto = (quem) => String(quem || '').replace(/\s*\(.*\)\s*$/, '');
+
+  function situacao(a) {
+    if (a.tipo === 'CONSEQUENTE') return ['sit-cinza', 'Cascata', ''];
+    if (a.status === 'VALIDADO') return ['sit-azul', 'Confirmado', a.confirmado_por ? `por ${nomeCurto(a.confirmado_por)}` : ''];
+    return ['sit-vermelho', 'Aguardando', ''];
+  }
+
+  function tabela(alvo, voos, atrasos) {
+    if (!atrasos.length) { alvo.innerHTML = '<p class="rel-vazio">Nenhum atraso registrado neste dia.</p>'; return; }
+    const voo = (id) => voos.find((v) => v.id === id) || {};
+    const linhas = [...atrasos].sort((a, b) => a.partida_prevista.localeCompare(b.partida_prevista) || a.id - b.id);
+    alvo.innerHTML = `
+      <table>
+        <thead><tr><th>Voo</th><th>Partida</th><th class="num">Min</th><th>Nova partida</th><th>Motivo no voo</th><th>Causa raiz</th><th>Situação</th></tr></thead>
+        <tbody>${linhas.map((a) => {
+          const [classe, texto, quem] = situacao(a);
+          const raiz = atrasos.find((x) => x.id === a.raiz_id);
+          const sintoma = a.tipo === 'CONSEQUENTE' ? `Herdado de ${raiz?.voo_numero ?? 'voo anterior'}` : a.sintoma_descricao;
+          return `<tr>
+            <td><strong>${esc(a.voo_numero)}</strong></td>
+            <td class="partida">${hora(a.partida_prevista)} ${esc(a.origem)} → ${esc(a.destino)}</td>
+            <td class="num"><strong>${a.minutos}</strong></td>
+            <td>${hora(voo(a.voo_id).partida_estimada)}</td>
+            <td>${esc(sintoma)}</td>
+            <td>${esc(a.causa_raiz_descricao)}</td>
+            <td class="${classe}">${texto}${quem ? `<small>${esc(quem)}</small>` : ''}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  }
+
+  function feedback(d, atrasos, av) {
+    if (!atrasos.length) return ['Nenhum voo atrasou neste dia.'];
+    const frases = [];
+    const cadeias = atrasos.filter((a) => a.tipo === 'ORIGINADOR').map((o) => {
+      const membros = atrasos.filter((a) => a.raiz_id === o.id);
+      return { o, total: somar(membros, (a) => a.minutos), voos: new Set(membros.map((a) => a.voo_id)).size };
+    }).sort((a, b) => b.total - a.total);
+    const maior = cadeias[0];
+    if (maior && cadeias.length === 1) {
+      frases.push(`Houve um só problema no dia: <strong>${esc(emFrase(maior.o.sintoma_descricao))}</strong> no <strong>${esc(maior.o.voo_numero)}</strong>, com <strong>${maior.total} min</strong> de atraso.`);
+      if (maior.voos > 1) frases.push(`Esse problema atrasou mais <strong>${maior.voos - 1} ${maior.voos - 1 === 1 ? 'voo' : 'voos'}</strong> do ${esc(maior.o.matricula)}. Atenção à <strong>${esc(maior.o.causa_raiz_area)}</strong>.`);
+    } else if (maior) {
+      const parte = pct(maior.total, d.total);
+      frases.push(`${parte >= 40 && parte < 50 ? `Quase metade do atraso do dia (<strong>${parte}%</strong>)` : `<strong>${parte}%</strong> do atraso do dia`} veio de um só problema: <strong>${esc(emFrase(maior.o.sintoma_descricao))}</strong> no <strong>${esc(maior.o.voo_numero)}</strong>.`);
+      if (maior.voos > 1) frases.push(`Esse problema atrasou mais <strong>${maior.voos - 1} ${maior.voos - 1 === 1 ? 'voo' : 'voos'}</strong> do ${esc(maior.o.matricula)}. Atenção à <strong>${esc(maior.o.causa_raiz_area)}</strong>.`);
+    }
+    frases.push(d.herdado
+      ? `<strong>${pct(d.herdado, d.total)}%</strong> dos minutos foram herdados, não problemas novos.`
+      : 'Nenhum atraso passou para outros voos: a folga no solo absorveu todos.');
+    frases.push(av.total
+      ? (AO_VIVO
+        ? `A Azuli sugeriu o motivo certo em <strong>${av.acertou} de ${av.total}</strong> ${av.total === 1 ? 'atraso confirmado' : 'atrasos confirmados'}.`
+        : `A Azuli acertou o motivo em <strong>${av.acertou} de ${av.total}</strong> exemplos testados.`)
+      : 'Ainda não há motivos confirmados neste dia para avaliar a Azuli.');
+    const pend = d.pendentes;
+    frases.push(pend.length
+      ? `Ainda ${pend.length === 1 ? 'falta' : 'faltam'} confirmar <strong>${pend.length} ${pend.length === 1 ? 'motivo' : 'motivos'}</strong> (${pend.map((a) => esc(a.voo_numero)).join(', ')}).`
+      : 'Todos os motivos do dia foram confirmados.');
+    return frases;
+  }
+
   function render({ voos, atrasos, titulo, exemplos }) {
     const tela = document.getElementById('relatorio');
     if (!tela) return;
@@ -257,6 +320,9 @@ const Relatorio = (() => {
     legenda($r('rel-acerto-legenda'), av.total
       ? ia.map((p) => [p.classe, `${p.nome} ${p.valor}`])
       : [['neutro', 'Nenhum motivo confirmado neste dia']]);
+
+    tabela($r('rel-tabela'), voos, atrasos);
+    $r('rel-feedback').innerHTML = feedback(d, atrasos, av).map((f) => `<li>${f}</li>`).join('');
 
     const grupos = Object.entries(PERFIS).map(([k, p]) => {
       const voos = d.voos.filter((v) => d.perfilVoo.get(v.id) === k);

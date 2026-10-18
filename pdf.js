@@ -99,6 +99,8 @@ const RelatorioPDF = (() => {
       </div>`;
   }
 
+  const nomeCurto = (quem) => String(quem || '').replace(/\s*\(.*\)\s*$/, '');
+
   const SITUACAO = (a) => (a.tipo === 'CONSEQUENTE'
     ? ['cinza', 'Cascata']
     : a.status === 'VALIDADO' ? ['azul', 'Confirmado'] : ['vermelho', 'Aguardando']);
@@ -121,7 +123,7 @@ const RelatorioPDF = (() => {
             ${comNova ? `<td>${hora(voo(a.voo_id).partida_estimada)}</td>` : ''}
             <td>${esc(sintoma)}</td>
             <td>${esc(a.causa_raiz_descricao)}</td>
-            <td class="imp-${cor}">${texto}</td>
+            <td class="imp-${cor}">${texto}${a.tipo === 'ORIGINADOR' && a.status === 'VALIDADO' && a.confirmado_por ? `<small>por ${esc(nomeCurto(a.confirmado_por))}</small>` : ''}</td>
           </tr>`;
         }).join('')}</tbody>
       </table>`;
@@ -303,8 +305,8 @@ const RelatorioPDF = (() => {
           return `
             <div class="imp-cartao">
               <div class="imp-cartao-topo"><strong>${esc(a.voo_numero)} · ${a.minutos} min · ${esc(a.sintoma_descricao)}</strong>
-                <span class="${a.status === 'VALIDADO' ? 'imp-azul' : 'imp-vermelho'}">${a.status === 'VALIDADO' ? `Confirmado: ${esc(a.causa_raiz_descricao)}` : 'Aguardando confirmação'}</span></div>
-              <p>${a.observacao ? `Descrição registrada: “${esc(a.observacao)}”` : 'Sem descrição.'}</p>
+                <span class="${a.status === 'VALIDADO' ? 'imp-azul' : 'imp-vermelho'}">${a.status === 'VALIDADO' ? `Confirmado${a.confirmado_por ? ` por ${esc(a.confirmado_por)}` : ''}: ${esc(a.causa_raiz_descricao)}` : 'Aguardando confirmação'}</span></div>
+              <p>${a.observacao ? `Descrição registrada: “${esc(a.observacao)}”` : 'Sem descrição.'}${a.registrado_por ? ` · registrado por ${esc(a.registrado_por)}` : ''}</p>
               <p class="imp-pareceres">${dele.length
                 ? dele.map((p) => `<span><strong>${esc(p.area)}</strong>${p.funcionario ? ` (${esc(p.funcionario)})` : ''}: ${esc(emFrase(motivo(p.motivo_codigo).descricao))}${p.justificativa ? `. “${esc(p.justificativa)}”` : ''}</span>`).join('')
                 : '<span>Nenhuma área deu parecer.</span>'}</p>
