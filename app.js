@@ -385,9 +385,8 @@ function cartaoVoo(v) {
     <li>
       <button class="${classes.join(' ')}" data-id="${v.id}" aria-pressed="${v.id === estado.vooSelecionado}">
         <span class="voo-numero">${esc(v.numero)}${FASE[v.fase] ? `<span class="fase fase-${v.fase.toLowerCase()}">${FASE[v.fase]}</span>` : ''}</span>
-        <span class="voo-rota">${esc(v.origem)} → ${esc(v.destino)}</span>
-        <span class="voo-hora">${horario}</span>
-        <span class="voo-chegada">chega ${hora(v.chegada_estimada)}</span>
+        <span class="voo-hora"><b>${esc(v.origem)}</b> ${horario}</span>
+        <span class="voo-hora"><b>${esc(v.destino)}</b> ${hora(v.chegada_estimada)}</span>
         <span class="voo-status">${v.atraso_total ? `+${v.atraso_total} min` : 'No horário'}</span>
       </button>
     </li>`;
@@ -415,11 +414,11 @@ function horariosDoVoo(v) {
     .sort((a, b) => b.partida_prevista.localeCompare(a.partida_prevista))[0];
   return `
     <div class="horarios">
-      ${celula('Partida', v.partida_estimada, v.partida_prevista)}
-      ${celula('Chegada', v.chegada_estimada, v.chegada_prevista)}
+      ${celula(`Partida de ${esc(v.origem)}`, v.partida_estimada, v.partida_prevista)}
+      ${celula(`Chegada em ${esc(v.destino)}`, v.chegada_estimada, v.chegada_prevista)}
     </div>
     ${v.atraso_herdado > 0 && anterior
-      ? `<p class="aguardando">Aguardando o avião: o ${esc(anterior.numero)} pousa às <strong>${hora(anterior.chegada_estimada)}</strong> e precisa de ${estado.solo ?? 30} min em solo.</p>`
+      ? `<p class="aguardando">Aguardando o avião: o ${esc(anterior.numero)} pousa em ${esc(anterior.destino)} às <strong>${hora(anterior.chegada_estimada)}</strong> e precisa de ${estado.solo ?? 30} min em solo.</p>`
       : ''}`;
 }
 

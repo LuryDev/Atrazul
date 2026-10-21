@@ -198,7 +198,7 @@ input:focus, select:focus { outline: 2px solid var(--azul); outline-offset: 0; b
 .voo.pousou { background: #f7f9f9; }
 .voo-rota, .voo-hora { font-size: .85rem; color: var(--texto-suave); }
 .voo-hora s { margin-right: 2px; }
-.voo-chegada { font-size: .76rem; color: var(--texto-suave); opacity: .85; }
+.voo-hora b { font-weight: 600; color: var(--texto); margin-right: 3px; }
 .voo-status { margin-top: 6px; font-size: .85rem; font-weight: 600; color: var(--verde); }
 .voo.herdou .voo-status { color: #8a5a10; }
 .voo.com-problema .voo-status { color: var(--vermelho); }
@@ -207,7 +207,6 @@ input:focus, select:focus { outline: 2px solid var(--azul); outline-offset: 0; b
   .voo { padding: 8px 9px; }
   .voo-numero { font-size: .92rem; }
   .voo-rota, .voo-hora, .voo-status { font-size: .76rem; white-space: nowrap; }
-  .voo-chegada { font-size: .7rem; white-space: nowrap; }
 }
 
 .detalhe { position: sticky; top: 16px; }
