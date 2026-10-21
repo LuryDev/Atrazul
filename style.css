@@ -96,7 +96,7 @@ small { font-size: .8rem; }
 .contador { background: var(--laranja); color: var(--azul-escuro); border-radius: 99px; font-size: .72rem; font-weight: 700; padding: 0 7px; }
 
 main { max-width: 1760px; margin: 0 auto; padding: 24px 28px 64px; }
-#confirmar, #relatorio { max-width: 1280px; margin: 0 auto; }
+#relatorio { max-width: 1280px; margin: 0 auto; }
 
 .tela-topo { margin-bottom: 20px; }
 .tela-topo h2 { font-size: 1.5rem; margin-bottom: 4px; }
@@ -198,6 +198,7 @@ input:focus, select:focus { outline: 2px solid var(--azul); outline-offset: 0; b
 .voo.pousou { background: #f7f9f9; }
 .voo-rota, .voo-hora { font-size: .85rem; color: var(--texto-suave); }
 .voo-hora s { margin-right: 2px; }
+.voo-chegada { font-size: .76rem; color: var(--texto-suave); opacity: .85; }
 .voo-status { margin-top: 6px; font-size: .85rem; font-weight: 600; color: var(--verde); }
 .voo.herdou .voo-status { color: #8a5a10; }
 .voo.com-problema .voo-status { color: var(--vermelho); }
@@ -206,6 +207,7 @@ input:focus, select:focus { outline: 2px solid var(--azul); outline-offset: 0; b
   .voo { padding: 8px 9px; }
   .voo-numero { font-size: .92rem; }
   .voo-rota, .voo-hora, .voo-status { font-size: .76rem; white-space: nowrap; }
+  .voo-chegada { font-size: .7rem; white-space: nowrap; }
 }
 
 .detalhe { position: sticky; top: 16px; }
@@ -256,6 +258,30 @@ input:focus, select:focus { outline: 2px solid var(--azul); outline-offset: 0; b
 .form-confirmar label { flex: 1; min-width: 200px; margin: 0; }
 
 .opiniao-nova { margin-top: 14px; font-size: .88rem; }
+#pendentes { grid-template-columns: 1fr; }
+.pendente { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: start; }
+.pend-acoes { border-left: 1px solid var(--borda); padding-left: 32px; }
+.pendente label { min-width: 0; }
+.pendente select, .pendente input { width: 100%; min-width: 0; }
+.pendente .form-confirmar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+.pendente .form-confirmar label { margin: 0; min-width: 0; }
+.pendente .form-parecer .linha { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; }
+.pendente .form-parecer .fim { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+.pendente .form-parecer .fim label { margin: 0; }
+.pendente .opiniao-nova { border-top: 1px solid var(--borda); padding-top: 14px; margin-top: 18px; }
+.horarios { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 4px; }
+.horarios div { background: var(--fundo); border-radius: 10px; padding: 10px 14px; }
+.horarios span { display: block; font-size: .72rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .05em; }
+.horarios strong { font-size: 1.15rem; }
+.horarios small { display: block; font-size: .78rem; color: var(--texto-suave); }
+.aguardando { margin: 8px 0 0; font-size: .88rem; color: var(--texto-suave); }
+.aguardando strong { color: var(--texto); }
+@media (max-width: 900px) {
+  .pendente { grid-template-columns: 1fr; gap: 16px; }
+  .pend-acoes { border-left: none; padding-left: 0; }
+  .pendente .form-confirmar, .pendente .form-parecer .fim, .pendente .form-parecer .linha { grid-template-columns: 1fr; }
+  .pendente .botao { width: 100%; }
+}
 .opiniao-nova summary { cursor: pointer; color: var(--azul); font-weight: 500; }
 .opiniao-nova form { margin-top: 12px; }
 .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

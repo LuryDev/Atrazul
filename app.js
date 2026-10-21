@@ -387,6 +387,7 @@ function cartaoVoo(v) {
         <span class="voo-numero">${esc(v.numero)}${FASE[v.fase] ? `<span class="fase fase-${v.fase.toLowerCase()}">${FASE[v.fase]}</span>` : ''}</span>
         <span class="voo-rota">${esc(v.origem)} → ${esc(v.destino)}</span>
         <span class="voo-hora">${horario}</span>
+        <span class="voo-chegada">chega ${hora(v.chegada_estimada)}</span>
         <span class="voo-status">${v.atraso_total ? `+${v.atraso_total} min` : 'No horário'}</span>
       </button>
     </li>`;
@@ -400,6 +401,26 @@ function selecionarVoo(id) {
   const det = $('detalhe');
   det.classList.remove('surgir'); void det.offsetWidth; det.classList.add('surgir');
   if (estado.vooSelecionado && window.innerWidth < 1000) $('detalhe').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function horariosDoVoo(v) {
+  const celula = (rotulo, estimada, prevista) => `
+    <div>
+      <span>${rotulo}</span>
+      <strong>${hora(estimada)}</strong>
+      ${v.atraso_total ? `<small>prevista ${hora(prevista)}</small>` : ''}
+    </div>`;
+  const anterior = estado.voos
+    .filter((x) => x.matricula === v.matricula && x.partida_prevista < v.partida_prevista)
+    .sort((a, b) => b.partida_prevista.localeCompare(a.partida_prevista))[0];
+  return `
+    <div class="horarios">
+      ${celula('Partida', v.partida_estimada, v.partida_prevista)}
+      ${celula('Chegada', v.chegada_estimada, v.chegada_prevista)}
+    </div>
+    ${v.atraso_herdado > 0 && anterior
+      ? `<p class="aguardando">Aguardando o avião: o ${esc(anterior.numero)} pousa às <strong>${hora(anterior.chegada_estimada)}</strong> e precisa de ${estado.solo ?? 30} min em solo.</p>`
+      : ''}`;
 }
 
 function renderDetalhe() {
@@ -442,6 +463,8 @@ function renderDetalhe() {
            <strong>No horário</strong>
            <span>Partida às ${hora(v.partida_prevista)}</span>
          </div>`}
+
+    ${partiu(v) ? '' : horariosDoVoo(v)}
 
     ${linhaDoAviao(v)}
 
@@ -791,6 +814,7 @@ function cartaoPendente(a) {
 
   return `
     <article class="cartao pendente" aria-labelledby="pend-${a.id}">
+      <div class="pend-info">
       <header>
         <h3 id="pend-${a.id}">Voo ${esc(a.voo_numero)}${dia} · ${a.minutos} min</h3>
         <p>${afetados.length
@@ -809,7 +833,9 @@ function cartaoPendente(a) {
               ${p.justificativa ? `<small>${esc(p.justificativa)}</small>` : ''}
             </li>`).join('')}
         </ul>` : ''}
+      </div>
 
+      <div class="pend-acoes">
       <form class="form-confirmar" data-id="${a.id}">
         <label>Motivo oficial
           <select name="motivo">${opcoesMotivo(sugestao || a.sintoma_codigo, true)}</select>
@@ -828,12 +854,15 @@ function cartaoPendente(a) {
               <select name="motivo">${opcoesMotivo(a.sintoma_codigo, true)}</select>
             </label>
           </div>
-          <label>Justificativa <span class="opcional">(opcional)</span>
-            <input name="justificativa">
-          </label>
-          <button class="botao secundario" type="submit">Salvar opinião</button>
+          <div class="fim">
+            <label><span>Justificativa <span class="opcional">(opcional)</span></span>
+              <input name="justificativa">
+            </label>
+            <button class="botao secundario" type="submit">Salvar opinião</button>
+          </div>
         </form>
       </details>
+      </div>
     </article>`;
 }
 
