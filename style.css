@@ -153,6 +153,11 @@ input:focus, select:focus { outline: 2px solid var(--azul); outline-offset: 0; b
 
 .layout-voos { display: grid; grid-template-columns: minmax(0, 1fr) clamp(380px, 30vw, 480px); gap: 20px; align-items: start; }
 .layout-voos > .cartao { margin-bottom: 0; }
+.coluna-voos { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.coluna-voos > .cartao { margin-bottom: 0; }
+#sequencia-demo { border: 2px dashed #2b4c9b; }
+.demo-titulo { font-size: 1.05rem; margin-bottom: 4px; }
+#sequencia-demo .aeronave:first-of-type { border-top: none; }
 
 .legenda { display: flex; gap: 18px; flex-wrap: wrap; font-size: .85rem; color: var(--texto-suave); margin-bottom: 8px; }
 .legenda span { display: flex; align-items: center; gap: 6px; }
@@ -456,6 +461,7 @@ body, .cartao, .voo, input, select { transition: background-color .25s ease, col
 [data-tema="escuro"] .topo, [data-tema="escuro"] .abas { background: #0a0d26; }
 [data-tema="escuro"] input, [data-tema="escuro"] select { background: #10153a; }
 [data-tema="escuro"] .voo { background: var(--cartao); }
+[data-tema="escuro"] #sequencia-demo { border-color: #8d93f0; }
 [data-tema="escuro"] .voo.pousou { background: #131838; }
 [data-tema="escuro"] .voo:hover, [data-tema="escuro"] .voo[aria-pressed="true"] { border-color: #8d93f0; }
 [data-tema="escuro"] .voo.herdou .voo-status,
@@ -823,3 +829,9 @@ body, .cartao, .voo, input, select { transition: background-color .25s ease, col
 .imp-tabela small { display: block; font-weight: 400; color: var(--i-suave); font-size: 7.4pt; }
 
 .rel-secao, #relatorio .cartao h3.azuli { color: var(--g-serie); }
+.imp-quebra { break-before: auto; }
+.imp-bloco:has(.imp-tabela) { break-inside: auto; }
+.imp-registros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7pt; }
+.imp-registros .imp-cartao-topo { flex-direction: column; gap: 2pt; }
+.imp-registros .imp-cartao-topo span { text-align: left; }
+.imp-rodape { break-before: avoid; break-inside: avoid; }

@@ -185,8 +185,9 @@ const RelatorioPDF = (() => {
   async function buscarHistorico(data) {
     const inicio = new Date(data + 'T00:00:00Z');
     inicio.setUTCDate(inicio.getUTCDate() - 7);
-    const voos = await consulta(db.from('vw_voo_resumo').select('*')
-      .gte('partida_prevista', inicio.toISOString().slice(0, 10)).lt('partida_prevista', data).order('partida_prevista'));
+    const voos = (await consulta(db.from('vw_voo_resumo').select('*')
+      .gte('partida_prevista', inicio.toISOString().slice(0, 10)).lt('partida_prevista', data).order('partida_prevista')))
+      .filter((v) => !v.demonstracao);
     const dias = agrupar(voos, (v) => v.partida_prevista.slice(0, 10), (v) => v.atraso_total)
       .map((g) => ({
         data: g.chave,

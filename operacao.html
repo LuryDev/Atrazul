@@ -72,12 +72,19 @@
       </header>
 
       <div class="layout-voos">
-        <div class="cartao">
-          <div class="legenda" aria-hidden="true">
-            <span><i class="cor herdado"></i>Atraso herdado de outro voo</span>
-            <span><i class="cor novo"></i>Problema no próprio voo</span>
+        <div class="coluna-voos">
+          <div class="cartao">
+            <div class="legenda" aria-hidden="true">
+              <span><i class="cor herdado"></i>Atraso herdado de outro voo</span>
+              <span><i class="cor novo"></i>Problema no próprio voo</span>
+            </div>
+            <div id="aeronaves"></div>
           </div>
-          <div id="aeronaves"></div>
+
+          <div id="sequencia-demo" class="cartao" hidden>
+            <h3 class="demo-titulo">Sequência de demonstração</h3>
+            <div id="demo-aeronaves"></div>
+          </div>
         </div>
 
         <aside id="detalhe" class="cartao detalhe" aria-live="polite" aria-label="Detalhes do voo">

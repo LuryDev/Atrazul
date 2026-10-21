@@ -152,8 +152,12 @@ async function recarregar() {
   ModeloMotivo.treinar(modeloPalavras, modeloMotivos);
   estado.voos = voos;
   estado.atrasos = atrasos;
-  estado.antigos = antigos.length
-    ? await consulta(db.from('vw_atraso_detalhado').select('*').in('raiz_id', antigos.map((a) => a.id)).order('id'))
+  const vooDemo = antigos.length
+    ? new Set((await consulta(db.from('voo').select('id').eq('demonstracao', true)).catch(() => [])).map((v) => v.id))
+    : new Set();
+  const antigosReais = antigos.filter((a) => !vooDemo.has(a.voo_id));
+  estado.antigos = antigosReais.length
+    ? await consulta(db.from('vw_atraso_detalhado').select('*').in('raiz_id', antigosReais.map((a) => a.id)).order('id'))
     : [];
 
   const ids = [...atrasos, ...estado.antigos].map((a) => a.id);
@@ -225,6 +229,7 @@ async function renderRelatorio() {
     ]);
     titulo = rotuloDiaLongo(diaRelatorio);
   }
+  ({ voos, atrasos } = semDemo(voos, atrasos));
   estado.rel = { data: diaRelatorio, voos, atrasos };
   const doDia = new Set(atrasos.filter((a) => a.tipo === 'ORIGINADOR').map((a) => a.id));
   const exemplos = (estado.exemplos || []).filter((e) => doDia.has(e.atraso_id));
@@ -314,11 +319,30 @@ const originadores = () => estado.atrasos.filter((a) => a.tipo === 'ORIGINADOR')
 
 const atrasoAnterior = new Map();
 
+function semDemo(voos, atrasos) {
+  const demo = new Set(voos.filter((v) => v.demonstracao).map((v) => v.id));
+  return { voos: voos.filter((v) => !demo.has(v.id)), atrasos: atrasos.filter((a) => !demo.has(a.voo_id)) };
+}
+
+function blocoAeronaves(voos) {
+  const porAeronave = {};
+  voos.forEach((v) => (porAeronave[v.matricula] ||= []).push(v));
+  return Object.entries(porAeronave).map(([matricula, lista]) => {
+    const aeronave = estado.aeronaves.find((a) => a.matricula === matricula);
+    return `
+      <section class="aeronave" aria-label="Aeronave ${esc(matricula)}">
+        <h3>${esc(matricula)} <small>${esc(aeronave?.modelo)}</small></h3>
+        <ol class="voos">${lista.map(cartaoVoo).join('')}</ol>
+      </section>`;
+  }).join('');
+}
+
 function renderVoos() {
-  const voos = estado.voos;
+  const { voos, atrasos: reais } = semDemo(estado.voos, estado.atrasos);
+  const demo = estado.voos.filter((v) => v.demonstracao);
   const atrasados = voos.filter((v) => v.atraso_total > 0).length;
   const total = voos.reduce((s, v) => s + v.atraso_total, 0);
-  const problemas = originadores().length;
+  const problemas = reais.filter((a) => a.tipo === 'ORIGINADOR').length;
 
   $('resumo-dia').innerHTML = atrasados
     ? `<strong>${atrasados} de ${voos.length} voos</strong> atrasaram, somando <strong>${total} min</strong>.
@@ -327,23 +351,16 @@ function renderVoos() {
     ? `Nenhum dos ${voos.length} voos atrasou até agora.`
     : `Nenhum dos ${voos.length} voos atrasou até agora. Use ▶ Reproduzir para ver o dia acontecer.`;
 
-  const porAeronave = {};
-  voos.forEach((v) => (porAeronave[v.matricula] ||= []).push(v));
-
-  $('aeronaves').innerHTML = Object.keys(porAeronave).length
-    ? Object.entries(porAeronave).map(([matricula, lista]) => {
-        const aeronave = estado.aeronaves.find((a) => a.matricula === matricula);
-        return `
-          <section class="aeronave" aria-label="Aeronave ${esc(matricula)}">
-            <h3>${esc(matricula)} <small>${esc(aeronave?.modelo)}</small></h3>
-            <ol class="voos">${lista.map(cartaoVoo).join('')}</ol>
-          </section>`;
-      }).join('')
+  $('aeronaves').innerHTML = voos.length
+    ? blocoAeronaves(voos)
     : '<p class="vazio">Nenhum voo neste dia.</p>';
+
+  $('sequencia-demo').hidden = !demo.length;
+  $('demo-aeronaves').innerHTML = blocoAeronaves(demo);
 
   document.querySelectorAll('.voo').forEach((b) => {
     b.addEventListener('click', () => selecionarVoo(Number(b.dataset.id)));
-    const v = voos.find((x) => x.id === Number(b.dataset.id));
+    const v = estado.voos.find((x) => x.id === Number(b.dataset.id));
     const antes = atrasoAnterior.get(v.id);
     if (antes !== undefined && antes !== v.atraso_total) piscar(b);
     atrasoAnterior.set(v.id, v.atraso_total);
